@@ -3,6 +3,7 @@ from flask_socketio import SocketIO, send, join_room, leave_room, emit;
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "mysecret"
+app.config['DEBUG'] = True
 io = SocketIO(app, cors_allowed_origins="*")
 
 app.debug = True
@@ -22,6 +23,10 @@ clients = []
 # def send_message(client_id, data):
 #     send('output', data, room=client_id)
 #     print('sending message "{}" to client "{}".'.format(data, client_id))
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 # Broadcast message
 @io.on('message')
