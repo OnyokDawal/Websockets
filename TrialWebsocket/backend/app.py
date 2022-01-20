@@ -9,34 +9,42 @@ app.debug = True
 app.host = 'localhost'
 clients = []
 
-@io.on('connect')
-def handle_connect():
-    print('Client connected')
-    clients.append(request.sid)
+# @io.on('connect')
+# def handle_connect():
+#     print('Client connected')
+#     clients.append(request.sid)
 
-@io.on('disconnect')
-def handle_disconnect():
-    print('Client disconnected')
-    clients.remove(request.sid)
-@io.on('message')
-def send_message(client_id, data):
-    send('output', data, room=client_id)
-    print('sending message "{}" to client "{}".'.format(data, client_id))
-
-#Broadcast message
+# @io.on('disconnect')
+# def handle_disconnect():
+#     print('Client disconnected')
+#     clients.remove(request.sid)
 # @io.on('message')
-# def handleMessage(msg):
-#     send(msg, broadcast=True)
-#     return None
+# def send_message(client_id, data):
+#     send('output', data, room=client_id)
+#     print('sending message "{}" to client "{}".'.format(data, client_id))
 
+# Broadcast message
+@io.on('message')
+def handleMessage(msg):
+    send(msg, broadcast=True)
+    return None
 
-# @io.on('join')
-# def on_join(data):
-#     username = data['username']
-#     room = data['room']
-#     join_room(room)
-#     send(username + ' has entered the room.', to=room)
+@io.on('username', namespace='/private')
+def receive_username(username):
+    clients.append({username : request.sid})
+    print(clients)
 
+@io.on('message from user', namespace='/messages')
+def receive_message_from_user(message):
+    print('USER MESSAGE: {}'.format(message))
+    emit('from flask', message.upper(), broadcast=True)
+
+@app.route('/originate')
+def originate():
+    io.emit('server originated', 'Something happened on the server!')
+    return '<h1>Sent!</h1>'
+
+# #Exit room
 # @io.on('leave')
 # def on_leave(data):
 #     username = data['username']
@@ -45,7 +53,7 @@ def send_message(client_id, data):
 #     send(username + ' has left the room.', to=room)
 
 # @io.on("join")
-# def join(message):
+# def join(message, sid):
 #     clients.append(request.sid)
 #     room = session.get('room')
 #     join_room(room)
